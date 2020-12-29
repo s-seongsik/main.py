@@ -24,3 +24,13 @@
   * ANACONDA
   > Database
   * MSSQL
+  > Database connection API(3가지 방법)
+  * JDBC(자바용)
+      1. :link: https://docs.microsoft.com/en-us/sql/connect/jdbc/download-microsoft-jdbc-driver-for-sql-server?view=sql-server-2017
+      2. Release number: 8.4.1
+      3. Released: August 27, 2020
+  * ODBC
+      1. :link: https://github.com/mkleehammer/pyodbc/wiki
+      2. ODBC Driver 17 for SQL Server(사용예정)
+  * pymssql
+
