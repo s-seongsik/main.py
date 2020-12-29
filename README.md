@@ -34,3 +34,7 @@
       2. ODBC Driver 17 for SQL Server(사용예정)
   * pymssql
 
+
+## 시스템 아키텍처
+
+
