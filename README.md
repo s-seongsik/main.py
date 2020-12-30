@@ -43,6 +43,26 @@
 ## :four: 시스템 아키텍처
 ![image](https://user-images.githubusercontent.com/52439201/103259818-615d3d80-49de-11eb-8259-e9033ab68f2c.png)
 
+### 프로젝트 구조
+project/  
+├── README.md  
+├── app.py  
+├── JDBC_Driver  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── ...  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── mssql-jdbc-8.4.1.jre8.jar  
+├── app
+│    ├── __init__.py
+│    ├── function1.py
+│    ├── function2.py
+│    ├── ...
+│    └── functionX.py
+└── api
+     ├── __init__.py
+     ├── namespace1.py
+     ├── namespace2.py
+     ├── ...
+     └── namespaceX.py
+
 
 ## :five: 테스트
 * 1차 REST API 테스트 : https://github.com/s-seongsik/main.py/issues/1
