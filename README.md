@@ -3,6 +3,7 @@
 #### :link: BDP JSON 참고 : http://192.168.10.33/redmine
 #### :link: Flask-RESTPlus’s documentation : https://flask-restplus.readthedocs.io/en/stable/index.html
 #### :link: Flask documentation : https://flask.palletsprojects.com/en/1.1.x/
+#### :link: conda of conda-forge package : https://anaconda.org/conda-forge/repo
 * seongsik/wizcore!0
 
 # :arrow_forward: 위즈코어 - PySpark RDBMS 연동 및 전처리 
