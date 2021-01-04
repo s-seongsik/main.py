@@ -42,7 +42,7 @@
 
 ## :four: 시스템 아키텍처
 ![image](https://user-images.githubusercontent.com/52439201/103259818-615d3d80-49de-11eb-8259-e9033ab68f2c.png)
-
+***
 ### 프로젝트 구조
 project/  
 ├── README.md  
