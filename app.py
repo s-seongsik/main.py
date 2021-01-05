@@ -1,19 +1,20 @@
 import os.path
 from flask import Flask, request
-from flask_restplus import Api, Resource, fields
+from flask_restplus import Api, Resource, fields, marshal
 
-app = Flask(__name__) # Flask App 생성한다
+app = Flask("seongsik") # Flask App 생성한다
 api = Api(app, version='1.0', title='넥스폼 데이터 처리 엔진', description='넥스폼에 사용될 데이터를 IMPORT/가공/분석 처리하는 파이썬 엔진 시스템') # API 만든다
-ns  = api.namespace('datasource', description='') # /datasource/ 네임스페이스 생성
+datasource = api.namespace('datasource', description='') # /datasource/ 네임스페이스 생성
 
-# REST Api에 이용할 데이터 모델을 정의한다
-datasource_model = api.model('datasource', {
-    'name' : fields.String(required=True, description='데이터소스 이름', help='데이터소스 필수'),
-    'driver': fields.String(required=True, description='\t'+'oracle.jdbc.OracleDriver,' + '\n' + '\t' + 'net.sourceforge.jtds.jdbc.Driver', help='JDBC 드라이버'),
-    'url': fields.String(required=True, description='jdbc:sqlserver://IP:PORT;databaseName=NAME', help='상품번호는 필수'),
-    'userName': fields.String(required=True, description='DB User', help='DB USER 필수'),
-    'password': fields.String(required=True, description='DB Password', help='DB Password 필수'),
-    'validationQeury': fields.String(readOnly=True),
+# 모델을 정의한다
+
+datasource_model = api.model('Datasource', {
+    'name': fields.String(required=True),
+    'driver': fields.String(required=True),
+    'url': fields.String(required=True),
+    'userName': fields.String(required=True),
+    'password': fields.String(required=True),
+    'validationQeury': fields.String,
     'timeBetweenEvictionRunMillis': fields.Integer,
     'testWhileIdle': fields.Boolean,
     'minIdle': fields.Integer,
@@ -23,85 +24,106 @@ datasource_model = api.model('datasource', {
 class GoodsDAO(object):
     '''상품정보 Data Access Object'''
     def __init__(self):
-        self.datasource_list = os.listdir('./resource/') # 전역변수 처리 필수
         self.counter = 0
         self.rows = []
 
+    def get_form(self):
+        resource_fields={}
+        resource_fields['code'] = fields.Integer
+        resource_fields['message'] = fields.Integer
+        resource_fields['errorPos'] = []
+        resource_fields['results'] = []
+
+        return resource_fields
+
     def all_get(self):
         import json
-        json_file_list = []
-        for name in self.datasource_list:
+        json_file_list = self.get_form()
+        datasource_list = os.listdir('./resource/')
+        for name in datasource_list:
             with open('./resource/{}'.format(name), 'r') as file:
                 json_file = json.load(file)
-                json_file_list.append(json_file)
+                json_file_list['results'].append(json_file)
+        json_file_list['code'] = 200
+        json_file_list['message'] = 'successful operation'
         return json_file_list
 
     def get(self, name):
         import json
+        json_file_list = self.get_form()
         json_file = name+'.json'
-        '''id를 이용하여 상품정보 조회한다'''
-        if json_file in self.datasource_list:
+        datasource_list = os.listdir('./resource/')
+        if json_file in datasource_list:
             with open('./resource/{}'.format(json_file), 'r') as file:
                 json_data = json.load(file)
-                return json_data
+                json_file_list['results'].append(json_data)
+                json_file_list['code'] = 200
+                json_file_list['message'] = 'successful operation'
+                return json_file_list
         else:
             api.abort(404, "{} doesn't exist".format(name)) # HTTPException 처리
 
     def create(self, data):
-        '''신규 상품을 등록한다'''
-        row = data
-        row['id'] = self.counter = self.counter + 1
-        self.rows.append(row)
-        return row
+        import json
+        json_data = marshal(data, datasource_model)# 정의한 datasource 모델 key와 자동 매핑 틀리면 error
+        json_file = data["name"] + '.json'
+        with open('./resource/{}'.format(json_file), 'w',encoding='utf-8') as file:
+            json.dump(json_data, file, indent="\t")
+        return json_data
 
-    def update(self, id, data):
-        '''입력 id의 data를 수정한다'''
-        row = self.get(id)
-        row.update(data)
-        return row
+    def update(self, name, data):
+        import json
+        json_data = marshal(data, datasource_model)  # 정의한 datasource 모델 key와 자동 매핑 틀리면 error
+        json_file = name + '.json'
+        with open('./resource/{}'.format(json_file), 'w',encoding='utf-8') as file:
+            json.dump(json_data, file, indent="\t")
+        return json_data
 
-    def delete(self, id):
-        '''입력 id의 data를 삭제한다'''
-        row = self.get(id)
-        self.rows.remove(row)
+    def delete(self, name):
+        json_file = './resource/{}'.format(name) + '.json'
+        if os.path.isfile(json_file):
+            os.remove(json_file)
+        else:
+            api.abort(404, "{} doesn't exist".format(name))  # HTTPException 처리
+
 
 DAO = GoodsDAO() # DAO 객체를 만든다
 
-@ns.route('/') # 네임스페이스 x.x.x.x/goods 하위 / 라우팅
+@datasource.route('/') # 네임스페이스 x.x.x.x/goods 하위 / 라우팅
 class GoodsListManager(Resource):
-    @ns.marshal_list_with(datasource_model)
+    # 마샬 리스트는 정의한 모델 객체를 목록으로 리턴해준다.
+    # @datasource.marshal_list_with(datasource_model)
     def get(self):
-        '''전체 datasource를 조회한다'''
+        '''전체 datasource를 조회'''
         return DAO.all_get()
 
-    @ns.expect(datasource_model)
-    @ns.marshal_with(datasource_model, code=201)
+    @datasource.expect(datasource_model)
+    @datasource.marshal_with(datasource_model, code=201)
     def post(self):
-        '''새로운 id 추가한다'''
-        # request.json[파라미터이름]으로 파라미터값 조회할 수 있다
-        print('input goods_name is', request.json['goods_name'])
+        '''새로운 datasource를 생성'''
         return DAO.create(api.payload), 201
 
 
-@ns.route('/<string:name>') # 네임스페이스 x.x.x.x/goods 하위 /숫자 라우팅
-@ns.response(404, 'datasource name을 찾을 수가 없어요')
-@ns.param('name', 'datasource name을 입력해주세요')
+@datasource.route('/<string:name>') # 네임스페이스 x.x.x.x/goods 하위 /숫자 라우팅
+@datasource.response(404, 'datasource name을 찾을 수가 없어요')
+@datasource.param('name', 'datasource name을 입력해주세요')
 class GoodsRUDManager(Resource):
-    @ns.marshal_with(datasource_model)
+    # @datasource.marshal_with(datasource_model)
     def get(self, name):
-        '''해당 id 상품정보를 조회한다'''
+        '''해당 datasource를 조회'''
         return DAO.get(name)
 
-    def delete(self, id):
-        '''해당 id 삭제한다'''
-        DAO.delete(id)
-        return '', 200
+    @datasource.response(204, 'Todo deleted')
+    def delete(self, name):
+        '''해당 datasource를 삭제'''
+        DAO.delete(name)
+        return '', 204
 
-    @ns.expect(datasource_model)
-    @ns.marshal_with(datasource_model)
-    def put(self, id):
-        '''해당 id 수정한다'''
-        return DAO.update(id, api.payload)
+    @datasource.expect(datasource_model)
+    @datasource.marshal_with(datasource_model)
+    def put(self, name):
+        '''해당 datasource를 수정'''
+        return DAO.update(name, api.payload)
 
 
 if __name__ == '__main__':
