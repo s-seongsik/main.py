@@ -1,7 +1,7 @@
 import os.path
 from flask_restplus import Namespace, Api, Resource, fields, marshal
 
-api = Namespace('datasource', description='') # /datasource/ 네임스페이스 생성
+api = Namespace('datasource', description='데이터소스 관리') # /datasource/ 네임스페이스 생성
 
 # 모델을 정의한다
 datasource_model = api.model('Datasource', {
@@ -18,11 +18,6 @@ datasource_model = api.model('Datasource', {
 })
 
 class GoodsDAO(object):
-    '''상품정보 Data Access Object'''
-    def __init__(self):
-        self.counter = 0
-        self.rows = []
-
     def get_form(self):
         resource_fields={}
         resource_fields['code'] = fields.Integer
@@ -83,21 +78,21 @@ class GoodsDAO(object):
             api.abort(404, "{} doesn't exist".format(name))  # HTTPException 처리
 
 
-DAO = GoodsDAO() # DAO 객체를 만든다
+datasource = GoodsDAO() # 인스턴스 생성
 
-@api.route('/') # 네임스페이스 x.x.x.x/goods 하위 / 라우팅
+@api.route('/') # 네임스페이스 x.x.x.x/datasource/ 라우팅
 class GoodsListManager(Resource):
     # 마샬 리스트는 정의한 모델 객체를 목록으로 리턴해준다.
     # @datasource.marshal_list_with(datasource_model)
     def get(self):
         '''전체 datasource를 조회'''
-        return DAO.all_get()
+        return datasource.all_get()
 
     @api.expect(datasource_model)
     @api.marshal_with(datasource_model, code=201)
     def post(self):
         '''새로운 datasource를 생성'''
-        return DAO.create(api.payload), 201
+        return datasource.create(api.payload), 201
 
 
 @api.route('/<string:name>') # 네임스페이스 x.x.x.x/goods 하위 /숫자 라우팅
@@ -107,16 +102,16 @@ class GoodsRUDManager(Resource):
     # @datasource.marshal_with(datasource_model)
     def get(self, name):
         '''해당 datasource를 조회'''
-        return DAO.get(name)
+        return datasource.get(name)
 
     @api.response(204, 'Todo deleted')
     def delete(self, name):
         '''해당 datasource를 삭제'''
-        DAO.delete(name)
+        datasource.delete(name)
         return '', 204
 
     @api.expect(datasource_model)
     @api.marshal_with(datasource_model)
     def put(self, name):
         '''해당 datasource를 수정'''
-        return DAO.update(name, api.payload)
+        return datasource.update(name, api.payload)

@@ -1,5 +1,6 @@
 from flask_restplus import Api
 from apis.datasource import api as datasource
+from apis.package import api as package
 
 # Apis 모듈 집계
 api = Api(
@@ -11,3 +12,4 @@ api = Api(
 
 # API 1 : datasource
 api.add_namespace(datasource)
+api.add_namespace(package)
