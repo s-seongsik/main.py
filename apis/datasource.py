@@ -3,7 +3,7 @@ from flask_restplus import Namespace, Api, Resource, fields, marshal
 
 api = Namespace('datasource', description='데이터소스 관리') # /datasource/ 네임스페이스 생성
 
-# 모델을 정의한다
+# 모델정의
 datasource_model = api.model('Datasource', {
     'name': fields.String(required=True),
     'driver': fields.String(required=True),
@@ -18,39 +18,44 @@ datasource_model = api.model('Datasource', {
 })
 
 class GoodsDAO(object):
-    def get_form(self):
+    def response_form(self):
         resource_fields={}
         resource_fields['code'] = fields.Integer
-        resource_fields['message'] = fields.Integer
-        resource_fields['errorPos'] = []
-        resource_fields['results'] = []
+        resource_fields['message'] = fields.String
+        resource_fields['errorPos'] = fields.List(fields.Integer)
+        resource_fields['results'] = fields.List(fields.Nested(datasource_model))
 
         return resource_fields
 
     def all_get(self):
         import json
-        json_file_list = self.get_form()
+        response_form = self.response_form()
+        get_list = []
         datasource_list = os.listdir('./resource/')
+
         for name in datasource_list:
             with open('./resource/{}'.format(name), 'r') as file:
                 json_file = json.load(file)
-                json_file_list['results'].append(json_file)
-        json_file_list['code'] = 200
-        json_file_list['message'] = 'successful operation'
-        return json_file_list
+                get_list.append(json_file)
+
+        response_data = {'code': 200, 'message': 'success', 'results': get_list}
+        result = marshal(response_data, response_form)
+
+        return result
 
     def get(self, name):
         import json
-        json_file_list = self.get_form()
+        response_form = self.response_form()
         json_file = name+'.json'
+        get_list = []
         datasource_list = os.listdir('./resource/')
         if json_file in datasource_list:
             with open('./resource/{}'.format(json_file), 'r') as file:
                 json_data = json.load(file)
-                json_file_list['results'].append(json_data)
-                json_file_list['code'] = 200
-                json_file_list['message'] = 'successful operation'
-                return json_file_list
+                get_list.append(json_data)
+                response_data = {'code': 200, 'message': 'success', 'results': get_list}
+                result = marshal(response_data, response_form)
+                return result
         else:
             api.abort(404, "{} doesn't exist".format(name)) # HTTPException 처리
 
@@ -104,7 +109,7 @@ class GoodsRUDManager(Resource):
         '''해당 datasource를 조회'''
         return datasource.get(name)
 
-    @api.response(204, 'Todo deleted')
+    @api.response(204, 'datasource deleted')
     def delete(self, name):
         '''해당 datasource를 삭제'''
         datasource.delete(name)
