@@ -20,6 +20,8 @@
 ## :three: 사용기술
   > 웹 프레임워크
   * Flask
+  > REST API + Swagger
+  * Flask-RESTPlus 
   > 빅데이터 처리 엔진
   * pyspark
   >개발언어
