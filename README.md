@@ -14,7 +14,7 @@
 ## :two: 개발환경
 * OS : Windows10
 * 개발도구 : Pycharm
-* REST API 테스트 도구 : postman
+* REST API 테스트 도구 : postman, Swagger
 * 소스형상관리 : Git, GitHub
 
 ## :three: 사용기술
