@@ -15,9 +15,7 @@
 * OS : Windows10
 * 개발도구 : Pycharm
 * REST API 테스트 도구 : postman
-* GIT GUI 도구 : GitHub Desktop
-* 소스 코드 편집기 : notepad++
-* 소스형상관리 : GitHub
+* 소스형상관리 : Git, GitHub
 
 ## :three: 사용기술
   > 웹 프레임워크
