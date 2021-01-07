@@ -1,16 +1,14 @@
 import os.path
-from flask_restplus import Namespace, Api, Resource, fields, marshal
+from flask_restplus import Namespace, Resource, fields, marshal, model
 
-api = Namespace('package', description='파이썬 패키지 관리') # /datasource/ 네임스페이스 생성
-
+api = Namespace('package', description='파이썬 패키지 관리')
 # 모델정의
 Package_model = api.model('Package', {
     'packageName': fields.String(required=True),
     'modules': fields.List(fields.String,required=True)
 })
 
-
-class GoodsDAO(object):
+class PackageDAO(object):
     def __init__(self):
         self.dir_path = './app/'
 
@@ -83,7 +81,7 @@ class GoodsDAO(object):
         else:
             api.abort(404, "{} doesn't exists".format(packageName))  # HTTPException 처리
 
-package = GoodsDAO() # DAO 객체를 만든다
+package = PackageDAO() # DAO 객체를 만든다
 
 @api.route('/') # 네임스페이스 x.x.x.x/package/ 라우팅
 class GoodsListManager(Resource):

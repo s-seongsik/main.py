@@ -1,5 +1,5 @@
 import os.path
-from flask_restplus import Namespace, Api, Resource, fields, marshal
+from flask_restplus import Namespace, Resource, fields, marshal
 
 api = Namespace('datasource', description='데이터소스 관리') # /datasource/ 네임스페이스 생성
 
@@ -17,7 +17,7 @@ datasource_model = api.model('Datasource', {
     'maxTotal': fields.Integer
 })
 
-class GoodsDAO(object):
+class DatasourceDAO(object):
     def response_form(self):
         resource_fields={}
         resource_fields['code'] = fields.Integer
@@ -83,7 +83,7 @@ class GoodsDAO(object):
             api.abort(404, "{} doesn't exist".format(name))  # HTTPException 처리
 
 
-datasource = GoodsDAO() # 인스턴스 생성
+datasource = DatasourceDAO() # 인스턴스 생성
 
 @api.route('/') # 네임스페이스 x.x.x.x/datasource/ 라우팅
 class GoodsListManager(Resource):
