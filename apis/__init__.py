@@ -2,6 +2,7 @@ from flask_restplus import Api,Namespace,fields
 from apis.datasource import api as datasource
 from apis.package import api as package
 from apis.module import api as module
+from apis.script import api as script
 
 # Apis 모듈 집계
 api = Api(
@@ -13,3 +14,4 @@ api = Api(
 api.add_namespace(datasource)
 api.add_namespace(package)
 api.add_namespace(module)
+api.add_namespace(script)

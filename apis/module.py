@@ -7,16 +7,16 @@ api = Namespace('module', description='파이썬 모듈 관리') # /module/ 네�
 module_model = api.model('Module', {
     'packageName': fields.String(required=True),
     'moduleName' : fields.String(required=True),
+    'extension' : fields.String(required=True),
     'size' : fields.String(required=True)
 })
 
 class ModuleDAO(object):
     def __init__(self):
         self.dir_path = './app/'
+        self.ALLOWED_EXTENSIONS = ['py']
 
     def get_size(self,package_path, moduleName):
-        import os
-
         try:
             # print(n / 1024, "KB")  # 킬로바이트 단위로
             # print("%.2f MB" % (n / (1024.0 * 1024.0)))  # 메가바이트 단위로
@@ -44,9 +44,10 @@ class ModuleDAO(object):
             package_path = self.dir_path + packageName
             module_list = os.listdir(package_path)
             for moduleName in module_list:
+                extension = moduleName.split('.')[-1]
                 result = self.get_size(package_path,moduleName)
                 size="file doesn't exists" if result==404 else result
-                data = marshal({'packageName':packageName, 'moduleName':moduleName, 'size':size}, module_model)
+                data = marshal({'packageName':packageName, 'moduleName':moduleName, 'extension':extension, 'size':size}, module_model)
                 get_list.append(data)
 
         response_data = {'code': 200, 'message': 'success', 'errorPos': [], 'results': get_list}
@@ -60,30 +61,32 @@ class ModuleDAO(object):
         package_path = self.dir_path + packageName
 
         if os.path.isdir(package_path):
-            if moduleName==None: # /package/{packageName}
+            if moduleName==None: # /module/{packageName}
                 module_list = os.listdir(package_path)
                 for moduleName in module_list:
                     result = self.get_size(package_path, moduleName)
+                    extension = moduleName.split('.')[-1]
                     size = "file doesn't exists" if result == 404 else result
-                    data = marshal({'packageName': packageName, 'moduleName': moduleName, 'size': size}, module_model)
+                    data = marshal({'packageName':packageName, 'moduleName':moduleName, 'extension':extension, 'size':size}, module_model)
                     get_list.append(data)
                 response_data = {'code': 200, 'message': 'success', 'errorPos': [], 'results': get_list}
                 result = marshal(response_data, response_form)
                 return result
-            else: # /package/{packageName}/{moduleName}
+            else: # /module/{packageName}/{moduleName}
                 mudule_path = package_path + '/' + moduleName
                 if os.path.exists(mudule_path):
                     result = self.get_size(package_path, moduleName)
+                    extension = moduleName.split('.')[-1]
                     size = "file doesn't exists" if result == 404 else result
-                    data = marshal({'packageName': packageName, 'moduleName': moduleName, 'size': size}, module_model)
+                    data = marshal({'packageName':packageName, 'moduleName':moduleName, 'extension':extension, 'size':size}, module_model)
                     get_list.append(data)
                     response_data = {'code': 200, 'message': 'success', 'errorPos': [], 'results': get_list}
                     result = marshal(response_data, response_form)
                     return result
                 else:
-                    api.abort(404, "{} moduleName doesn't exist".format(moduleName))  # HTTPException 처리
+                    api.abort(404, "{} module doesn't exist".format(mudule_path))  # HTTPException 처리
         else:
-            api.abort(404, "{} packageName doesn't exist".format(packageName))  # HTTPException 처리
+            api.abort(404, "{} package doesn't exist".format(package_path))  # HTTPException 처리
 
     def update(self, packageName, moduleName, data):
         response = marshal(data, module_model)
@@ -97,34 +100,57 @@ class ModuleDAO(object):
                 os.rename(module_path, module_update_path)
                 return response
             else:
-                api.abort(404, "{} moduleName doesn't exists".format(moduleName))  # HTTPException 처리
+                api.abort(404, "{} module doesn't exists".format(module_path))  # HTTPException 처리
         else:
-            api.abort(404, "{} packageName doesn't exist".format(packageName))  # HTTPException 처리
+            api.abort(404, "{} package doesn't exist".format(package_path))  # HTTPException 처리
+
+
+    def delete(self, packageName, moduleName):
+        package_path = self.dir_path + packageName
+        module_path = package_path + '/' + moduleName
+        if os.path.isdir(package_path):
+            if os.path.exists(module_path):
+                os.remove(module_path)
+            else:
+                api.abort(404, "{} module doesn't exists".format(module_path))  # HTTPException 처리
+        else:
+            api.abort(404, "{} package doesn't exist".format(package_path))  # HTTPException 처리
 
 module = ModuleDAO() # DAO 객체를 만든다
 
 @api.route('/') # 네임스페이스 x.x.x.x/package/ 라우팅
 class GoodsListManager(Resource):
     def get(self):
-        '''전체 package 조회'''
+        '''전체조회'''
         return module.all_get()
 
 @api.route('/<string:packageName>') # 네임스페이스 x.x.x.x/package/name 라우팅
 @api.response(404, 'package를 찾을 수가 없습니다.')
 @api.param('packageName', 'package를 입력해주세요')
-class ModuleRManager(Resource):
+class ModuleLevel1Manager(Resource):
     # @datasource.marshal_with(datasource_model)
     def get(self, packageName):
-        '''해당 package.module 조회'''
+        '''해당 package module 전체조회'''
         return module.get(packageName, None)
 
 @api.route('/<string:packageName>/<string:moduleName>')  # 네임스페이스 x.x.x.x/package/name 라우팅
 @api.response(404, 'package를 찾을 수가 없습니다.')
-@api.param('packageName', 'package를 입력해주세요')
-@api.param('moduleName', 'moduleName를 입력해주세요')
-class ModuleUManager(Resource):
+@api.param('packageName', 'packageName을 입력해주세요')
+@api.param('moduleName', 'moduleName을 입력해주세요')
+class ModuleLevel2Manager(Resource):
+    def get(self,packageName, moduleName):
+        '''해당 package module 조회'''
+        return module.get(packageName, moduleName)
+
     @api.expect(module_model)
     @api.marshal_with(module_model)
     def put(self, packageName, moduleName):
-        '''해당 package.module name 수정'''
+        '''해당 package module 수정'''
         return module.update(packageName, moduleName, api.payload)
+
+    @api.response(204, 'datasource deleted')
+    def delete(self, packageName, moduleName):
+        '''해당 datasource를 삭제'''
+        module.delete(packageName, moduleName)
+        return '', 204
+

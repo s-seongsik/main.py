@@ -1,5 +1,5 @@
 import os.path
-from flask_restplus import Namespace, Resource, fields, marshal
+from flask_restplus import Namespace, Resource, fields, marshal, Model
 
 api = Namespace('datasource', description='데이터소스 관리') # /datasource/ 네임스페이스 생성
 
@@ -15,6 +15,13 @@ datasource_model = api.model('Datasource', {
     'testWhileIdle': fields.Boolean,
     'minIdle': fields.Integer,
     'maxTotal': fields.Integer
+})
+
+response_model = api.inherit('Response', datasource_model, {
+    'code': fields.String(required=True),
+    'message': fields.String(required=True),
+    'errorPos': fields.String(required=True),
+    'results': fields.List
 })
 
 class DatasourceDAO(object):
@@ -80,7 +87,7 @@ class DatasourceDAO(object):
         if os.path.isfile(json_file):
             os.remove(json_file)
         else:
-            api.abort(404, "{} doesn't exist".format(name))  # HTTPException 처리
+            api.abort(404, "{} doesn't exist".format(json_file))  # HTTPException 처리
 
 
 datasource = DatasourceDAO() # 인스턴스 생성

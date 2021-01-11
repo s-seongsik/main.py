@@ -9,7 +9,7 @@ import pandas as pd
 
 appName = "PySpark SQL Server Example - via JDBC"
 master = "local"
-jdbc_path = "JDBC_Driver/sqljdbc_8.4/kor/mssql-jdbc-8.4.1.jre8.jar"
+jdbc_path = "../JDBC_Driver/sqljdbc_8.4/kor/mssql-jdbc-8.4.1.jre8.jar"
 conf = SparkConf()\
     .setAppName(appName) \
     .setMaster(master) \
