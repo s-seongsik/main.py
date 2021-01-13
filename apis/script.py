@@ -4,8 +4,11 @@ from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
 
 api = Namespace('script', description='파이썬 스크립트 관리')
+
 # 모델정의
+
 Script_model = api.model('Script', {
+    'datasourceName' : fields.String(required=True),
     'packageName' : fields.String(required=True),
     'moduleName' : fields.String(required=True),
     'extension' : fields.String(required=True)
@@ -21,7 +24,8 @@ class ScriptDAO(object):
         resource_fields['code'] = fields.Integer
         resource_fields['message'] = fields.String
         resource_fields['errorPos'] = fields.List(fields.Integer)
-        resource_fields['results'] = fields.List(fields.Nested(Script_model))
+        resource_fields['results'] = fields.List(
+            fields.Nested(Script_model))
 
         return resource_fields
 
@@ -74,38 +78,33 @@ class ScriptDAO(object):
         else:
             api.abort(404, "{} package doesn't exist".format(package_path))  # HTTPException 처리
 
-
-
-def delete(self, packageName, moduleName):
-
-    return
-
 script = ScriptDAO() # DAO 객체를 만든다
+
+
 
 @api.route('/<string:packageName>') # 네임스페이스 x.x.x.x/package/ 라우팅
 @api.response(404, 'package를 찾을 수가 없어요')
 @api.param('packageName', 'package를 입력해주세요')
-class GoodsListManager(Resource):
+class ListManager(Resource):
     @api.expect(Script_model)
     @api.marshal_with(Script_model, code=201)
     def post(self, packageName):
-        '''새로운 package 생성'''
+        '''새로운 script 생성'''
         return script.create(packageName), 201
-
 
 @api.route('/<string:packageName>/<string:moduleName>') # 네임스페이스 x.x.x.x/package/name 라우팅
 @api.response(404, 'package를 찾을 수가 없어요')
 @api.param('packageName', 'packageName을 입력해주세요')
 @api.param('moduleName', 'moduleName을 입력해주세요')
-class GoodsRUDManager(Resource):
+class RUDManager(Resource):
     @api.response(204, 'package.module deleted')
     def delete(self, packageName, moduleName):
-        '''해당 package 삭제'''
+        '''해당 script 삭제'''
         script.delete(packageName, moduleName)
         return '', 204
 
     # @api.expect(Script_model)
     # @api.marshal_with(Script_model) : 정의 된 API 모델 형식을 그대로 반환
     def put(self, packageName, moduleName):
-        '''해당 package 수정'''
+        '''해당 script 수정'''
         return script.update(packageName, moduleName)

@@ -119,9 +119,9 @@ class ModuleDAO(object):
 module = ModuleDAO() # DAO 객체를 만든다
 
 @api.route('/') # 네임스페이스 x.x.x.x/package/ 라우팅
-class GoodsListManager(Resource):
+class ListManager(Resource):
     def get(self):
-        '''전체조회'''
+        '''package module 전체조회'''
         return module.all_get()
 
 @api.route('/<string:packageName>') # 네임스페이스 x.x.x.x/package/name 라우팅
@@ -137,7 +137,7 @@ class ModuleLevel1Manager(Resource):
 @api.response(404, 'package를 찾을 수가 없습니다.')
 @api.param('packageName', 'packageName을 입력해주세요')
 @api.param('moduleName', 'moduleName을 입력해주세요')
-class ModuleLevel2Manager(Resource):
+class RUDManager(Resource):
     def get(self,packageName, moduleName):
         '''해당 package module 조회'''
         return module.get(packageName, moduleName)
@@ -150,7 +150,7 @@ class ModuleLevel2Manager(Resource):
 
     @api.response(204, 'datasource deleted')
     def delete(self, packageName, moduleName):
-        '''해당 datasource를 삭제'''
+        '''해당 package module 삭제'''
         module.delete(packageName, moduleName)
         return '', 204
 

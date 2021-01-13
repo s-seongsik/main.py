@@ -1,4 +1,5 @@
 import os.path
+import json
 from flask_restplus import Namespace, Resource, fields, marshal, Model
 
 api = Namespace('datasource', description='데이터소스 관리') # /datasource/ 네임스페이스 생성
@@ -35,13 +36,12 @@ class DatasourceDAO(object):
         return resource_fields
 
     def all_get(self):
-        import json
         response_form = self.response_form()
         get_list = []
-        datasource_list = os.listdir('./resource/')
+        datasource_list = os.listdir('./resource/datasource/')
 
         for name in datasource_list:
-            with open('./resource/{}'.format(name), 'r') as file:
+            with open('./resource/datasource/{}'.format(name), 'r') as file:
                 json_file = json.load(file)
                 get_list.append(json_file)
 
@@ -51,13 +51,12 @@ class DatasourceDAO(object):
         return result
 
     def get(self, name):
-        import json
         response_form = self.response_form()
         json_file = name+'.json'
         get_list = []
-        datasource_list = os.listdir('./resource/')
+        datasource_list = os.listdir('./resource/datasource/')
         if json_file in datasource_list:
-            with open('./resource/{}'.format(json_file), 'r') as file:
+            with open('./resource/datasource/{}'.format(json_file), 'r') as file:
                 json_data = json.load(file)
                 get_list.append(json_data)
                 response_data = {'code': 200, 'message': 'success', 'results': get_list}
@@ -67,7 +66,6 @@ class DatasourceDAO(object):
             api.abort(404, "{} doesn't exist".format(name)) # HTTPException 처리
 
     def create(self, data):
-        import json
         json_data = marshal(data, datasource_model)# 정의한 datasource 모델 key와 자동 매핑 틀리면 error
         json_file = data["name"] + '.json'
         with open('./resource/{}'.format(json_file), 'w',encoding='utf-8') as file:
@@ -75,15 +73,14 @@ class DatasourceDAO(object):
         return json_data
 
     def update(self, name, data):
-        import json
         json_data = marshal(data, datasource_model)  # 정의한 datasource 모델 key와 자동 매핑 틀리면 error
         json_file = name + '.json'
-        with open('./resource/{}'.format(json_file), 'w',encoding='utf-8') as file:
+        with open('./resource/datasource/{}'.format(json_file), 'w',encoding='utf-8') as file:
             json.dump(json_data, file, indent="\t")
         return json_data
 
     def delete(self, name):
-        json_file = './resource/{}'.format(name) + '.json'
+        json_file = './resource/datasource/{}'.format(name) + '.json'
         if os.path.isfile(json_file):
             os.remove(json_file)
         else:
@@ -93,7 +90,7 @@ class DatasourceDAO(object):
 datasource = DatasourceDAO() # 인스턴스 생성
 
 @api.route('/') # 네임스페이스 x.x.x.x/datasource/ 라우팅
-class GoodsListManager(Resource):
+class ListManager(Resource):
     # 마샬 리스트는 정의한 모델 객체를 목록으로 리턴해준다.
     # @datasource.marshal_list_with(datasource_model)
     def get(self):
@@ -110,7 +107,7 @@ class GoodsListManager(Resource):
 @api.route('/<string:name>') # 네임스페이스 x.x.x.x/goods 하위 /숫자 라우팅
 @api.response(404, 'datasource name을 찾을 수가 없어요')
 @api.param('name', 'datasource name을 입력해주세요')
-class GoodsRUDManager(Resource):
+class RUDManager(Resource):
     # @datasource.marshal_with(datasource_model)
     def get(self, name):
         '''해당 datasource를 조회'''

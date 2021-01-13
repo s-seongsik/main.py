@@ -84,7 +84,7 @@ class PackageDAO(object):
 package = PackageDAO() # DAO 객체를 만든다
 
 @api.route('/') # 네임스페이스 x.x.x.x/package/ 라우팅
-class GoodsListManager(Resource):
+class ListManager(Resource):
     def get(self):
         '''전체 package 조회'''
         return package.all_get()
@@ -99,7 +99,7 @@ class GoodsListManager(Resource):
 @api.route('/<string:packageName>') # 네임스페이스 x.x.x.x/package/name 라우팅
 @api.response(404, 'package를 찾을 수가 없어요')
 @api.param('packageName', 'package를 입력해주세요')
-class GoodsRUDManager(Resource):
+class RUDManager(Resource):
     # @datasource.marshal_with(datasource_model)
     def get(self, packageName):
         '''해당 package 조회'''

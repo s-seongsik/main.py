@@ -3,6 +3,7 @@ from apis.datasource import api as datasource
 from apis.package import api as package
 from apis.module import api as module
 from apis.script import api as script
+from apis.scenario import api as scenario
 
 # Apis 모듈 집계
 api = Api(
@@ -15,3 +16,4 @@ api.add_namespace(datasource)
 api.add_namespace(package)
 api.add_namespace(module)
 api.add_namespace(script)
+api.add_namespace(scenario)
