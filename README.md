@@ -2,6 +2,7 @@
 #### :link: SQL Server in Spark 참고 : https://kontext.tech/column/spark/290/connect-to-sql-server-in-spark-pyspark
 #### :link: Flask-RESTPlus’s documentation : https://flask-restplus.readthedocs.io/en/stable/index.html
 #### :link: Flask documentation : https://flask.palletsprojects.com/en/1.1.x/
+#### :link: Flask documentation : https://flask-docs-kr.readthedocs.io/ko/latest/
 #### :link: conda of conda-forge package : https://anaconda.org/conda-forge/repo
 #### :link: BDP JSON 참고 : http://192.168.10.33/redmine
 * seongsik/wizcore!0
