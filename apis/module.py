@@ -1,7 +1,7 @@
 import os.path
 from flask_restplus import Namespace, Resource, fields, marshal
 
-api = Namespace('module', description='파이썬 모듈 관리') # /module/ 네임스페이스 생성
+api = Namespace('module', description='모듈 관리') # /module/ 네임스페이스 생성
 
 # 모델정의
 module_model = api.model('Module', {
@@ -13,7 +13,7 @@ module_model = api.model('Module', {
 
 class ModuleDAO(object):
     def __init__(self):
-        self.dir_path = './app/'
+        self.dir_path = './apps/'
         self.ALLOWED_EXTENSIONS = ['py']
 
     def get_size(self,package_path, moduleName):
@@ -130,7 +130,7 @@ class ListManager(Resource):
 class ModuleLevel1Manager(Resource):
     # @datasource.marshal_with(datasource_model)
     def get(self, packageName):
-        '''해당 package module 전체조회'''
+        '''package module 조회'''
         return module.get(packageName, None)
 
 @api.route('/<string:packageName>/<string:moduleName>')  # 네임스페이스 x.x.x.x/package/name 라우팅
@@ -139,18 +139,18 @@ class ModuleLevel1Manager(Resource):
 @api.param('moduleName', 'moduleName을 입력해주세요')
 class RUDManager(Resource):
     def get(self,packageName, moduleName):
-        '''해당 package module 조회'''
+        '''package module 조회'''
         return module.get(packageName, moduleName)
 
     @api.expect(module_model)
     @api.marshal_with(module_model)
     def put(self, packageName, moduleName):
-        '''해당 package module 수정'''
+        '''package module 수정'''
         return module.update(packageName, moduleName, api.payload)
 
     @api.response(204, 'datasource deleted')
     def delete(self, packageName, moduleName):
-        '''해당 package module 삭제'''
+        '''package module 삭제'''
         module.delete(packageName, moduleName)
         return '', 204
 

@@ -7,13 +7,14 @@ import pandas as pd
 # 설명 : JDBC는 자바에서 데이터베이스에 접속할 수 있도록 하는 자바 API이다. JDBC는 데이터베이스에서 자료를 쿼리하거나 업데이트하는 방법을 제공한다.
 '''
 
-appName = "PySpark SQL Server Example - via JDBC"
+appName = "PySpark SQL Server Example"
 master = "local"
-jdbc_path = "../JDBC_Driver/sqljdbc_8.4/kor/mssql-jdbc-8.4.1.jre8.jar"
+jdbc_path = "./JDBC_Driver/sqljdbc_8.4/kor/mssql-jdbc-8.4.1.jre8.jar"
 conf = SparkConf()\
     .setAppName(appName) \
     .setMaster(master) \
     .set("spark.driver.extraClassPath",jdbc_path)
+
 sc = SparkContext(conf=conf)
 sqlContext = SQLContext(sc)
 spark = sqlContext.sparkSession
@@ -23,7 +24,7 @@ port = "4085"
 database = "nexpom_mando"
 table = "PROC_DTL"
 user = "sa"
-password  = "wizcore"
+password = "wizcore"
 
 jdbcDF = spark.read.format("jdbc") \
     .option("url", f"jdbc:sqlserver://{host}:{port};databaseName={database}") \
@@ -69,7 +70,7 @@ sparkDF.show()
 # 1 : 
 """
 from pyspark import SparkContext, SparkConf, SQLContext
-import _mssql
+import pymssql
 import pandas as pd
 
 appName = "PySpark SQL Server Example - via pymssql"
@@ -86,7 +87,7 @@ table = "dbo.Employees"
 user = "zeppelin"
 password  = "zeppelin"
 
-conn = _mssql.connect(server='localhost:1433', user=user, password=password,database=database)
+conn = pymssql.connect(server='localhost:1433', user=user, password=password,database=database)
 query = f"SELECT EmployeeID, EmployeeName, Position FROM {table}"
 conn.execute_query(query)
 rs = [ row for row in conn ]

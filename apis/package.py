@@ -1,7 +1,7 @@
 import os.path
 from flask_restplus import Namespace, Resource, fields, marshal, model
 
-api = Namespace('package', description='파이썬 패키지 관리')
+api = Namespace('package', description='패키지 관리')
 # 모델정의
 Package_model = api.model('Package', {
     'packageName': fields.String(required=True),
@@ -10,7 +10,7 @@ Package_model = api.model('Package', {
 
 class PackageDAO(object):
     def __init__(self):
-        self.dir_path = './app/'
+        self.dir_path = './apps/'
 
     def response_form(self):
         resource_fields = {}
@@ -75,7 +75,10 @@ class PackageDAO(object):
 
     def delete(self, packageName):
         delete_path = self.dir_path+packageName
-
+        '''
+        디렉토리가 비어있지 않으면 삭제할 수 없음.
+        안에 있는 모듈까지 일괄 삭제할 수 있도록 수정
+        '''
         if os.path.exists(delete_path):
             os.rmdir(delete_path)
         else:
@@ -86,13 +89,13 @@ package = PackageDAO() # DAO 객체를 만든다
 @api.route('/') # 네임스페이스 x.x.x.x/package/ 라우팅
 class ListManager(Resource):
     def get(self):
-        '''전체 package 조회'''
+        '''package 전체조회'''
         return package.all_get()
 
     @api.expect(Package_model)
     @api.marshal_with(Package_model, code=201)
     def post(self):
-        '''새로운 package 생성'''
+        '''package 생성'''
         return package.create(api.payload), 201
 
 
@@ -102,17 +105,17 @@ class ListManager(Resource):
 class RUDManager(Resource):
     # @datasource.marshal_with(datasource_model)
     def get(self, packageName):
-        '''해당 package 조회'''
+        '''package 조회'''
         return package.get(packageName)
 
     @api.response(204, 'package deleted')
     def delete(self, packageName):
-        '''해당 package 삭제'''
+        '''package 삭제'''
         package.delete(packageName)
         return '', 204
 
     @api.expect(Package_model)
     @api.marshal_with(Package_model)
     def put(self, packageName):
-        '''해당 package 수정'''
+        '''package 수정'''
         return package.update(packageName, api.payload)

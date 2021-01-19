@@ -1,5 +1,6 @@
 import os.path
 import json
+from configparser import ConfigParser
 from flask_restplus import Namespace, Resource, fields, marshal, Model
 
 api = Namespace('datasource', description='데이터소스 관리') # /datasource/ 네임스페이스 생성
@@ -7,85 +8,102 @@ api = Namespace('datasource', description='데이터소스 관리') # /datasourc
 # 모델정의
 datasource_model = api.model('Datasource', {
     'name': fields.String(required=True),
-    'driver': fields.String(required=True),
-    'url': fields.String(required=True),
-    'userName': fields.String(required=True),
-    'password': fields.String(required=True),
-    'validationQeury': fields.String,
-    'timeBetweenEvictionRunMillis': fields.Integer,
-    'testWhileIdle': fields.Boolean,
-    'minIdle': fields.Integer,
-    'maxTotal': fields.Integer
-})
-
-response_model = api.inherit('Response', datasource_model, {
-    'code': fields.String(required=True),
-    'message': fields.String(required=True),
-    'errorPos': fields.String(required=True),
-    'results': fields.List
+    'type': fields.String(required=True, description="JDBC/ODBC/pymssql"),
+    'host': fields.String(required=True),
+    'port': fields.String(required=True),
+    'database': fields.String(required=True),
+    'user': fields.String(required=True),
+    'password': fields.String(required=True)
 })
 
 class DatasourceDAO(object):
+    def __init__(self):
+        self.dir_path = './resource/config/config.ini'
+
     def response_form(self):
         resource_fields={}
         resource_fields['code'] = fields.Integer
         resource_fields['message'] = fields.String
         resource_fields['errorPos'] = fields.List(fields.Integer)
         resource_fields['results'] = fields.List(fields.Nested(datasource_model))
-
         return resource_fields
 
-    def all_get(self):
-        response_form = self.response_form()
-        get_list = []
-        datasource_list = os.listdir('./resource/datasource/')
-
-        for name in datasource_list:
-            with open('./resource/datasource/{}'.format(name), 'r') as file:
-                json_file = json.load(file)
-                get_list.append(json_file)
-
-        response_data = {'code': 200, 'message': 'success', 'results': get_list}
-        result = marshal(response_data, response_form)
-
-        return result
+    def config(self):
+        config = ConfigParser()
+        config.read(self.dir_path, encoding='utf-8')
+        return config
 
     def get(self, name):
+        config = self.config()
         response_form = self.response_form()
-        json_file = name+'.json'
-        get_list = []
-        datasource_list = os.listdir('./resource/datasource/')
-        if json_file in datasource_list:
-            with open('./resource/datasource/{}'.format(json_file), 'r') as file:
-                json_data = json.load(file)
-                get_list.append(json_data)
-                response_data = {'code': 200, 'message': 'success', 'results': get_list}
-                result = marshal(response_data, response_form)
-                return result
+        section_list = config.sections()
+        get_data = []
+        if name == None:
+            for section in section_list:
+                option_list = config.options(section)
+                object = {}
+                for option in option_list:
+                    object[option] = config.get(section, option)
+                get_data.append(object)
+            response = {'code': 200, 'message': 'success', 'errorPos': [], 'results': get_data}
+            result = marshal(response, response_form)
         else:
-            api.abort(404, "{} doesn't exist".format(name)) # HTTPException 처리
-
-    def create(self, data):
-        json_data = marshal(data, datasource_model)# 정의한 datasource 모델 key와 자동 매핑 틀리면 error
-        json_file = data["name"] + '.json'
-        with open('./resource/{}'.format(json_file), 'w',encoding='utf-8') as file:
-            json.dump(json_data, file, indent="\t")
-        return json_data
+            if not config.has_section(name):
+                api.abort(404, "{} doesn't exist".format(name))  # HTTPException 처리
+            else:
+                option_list = config.options(name)
+                object = {}
+                for option in option_list:
+                    object[option] = config.get(name, option)
+                get_data.append(object)
+                response = {'code': 200, 'message': 'success', 'errorPos': [], 'results': get_data}
+                result = marshal(response, response_form)
+        return result
 
     def update(self, name, data):
-        json_data = marshal(data, datasource_model)  # 정의한 datasource 모델 key와 자동 매핑 틀리면 error
-        json_file = name + '.json'
-        with open('./resource/datasource/{}'.format(json_file), 'w',encoding='utf-8') as file:
-            json.dump(json_data, file, indent="\t")
-        return json_data
+        config = self.config()
+        response_form = self.response_form()
+        get_data = marshal(data, datasource_model)
 
-    def delete(self, name):
-        json_file = './resource/datasource/{}'.format(name) + '.json'
-        if os.path.isfile(json_file):
-            os.remove(json_file)
+        if not config.has_section(name):
+            api.abort(404, "{} doesn't exist".format(name))  # HTTPException 처리
         else:
-            api.abort(404, "{} doesn't exist".format(json_file))  # HTTPException 처리
+            for key in get_data.keys():
+                value = get_data[key]
+                config.set(name, key, value)
+            with open(self.dir_path, "w") as file:
+                config.write(file)
+            response = {'code': 200, 'message': 'success', 'errorPos': [], 'results': get_data}
+            result = marshal(response, response_form)
+            return result
 
+    def create(self, data):
+        config = self.config()
+        response_form = self.response_form()
+        get_data = marshal(data, datasource_model)
+        name = get_data["name"]
+        # section 존재여부 확인
+        if config.has_section(name):
+            api.abort(404, "{} already exists".format(name))  # HTTPException 처리
+        else:
+            # ConfigParser section 생성
+            config[name] = get_data
+            with open(self.dir_path, "w") as file:
+                config.write(file)
+
+            response = {'code': 200, 'message': 'success', 'errorPos': [], 'results': get_data}
+            result = marshal(response, response_form)
+            return result
+
+    def delete(self,name):
+        config = self.config()
+        if not config.has_section(name):
+            api.abort(404, "{} doesn't exist".format(name))  # HTTPException 처리
+        else:
+            config.remove_section(name)
+            with open(self.dir_path, "w") as file:
+                config.write(file)
+            return {"message" : "{} delete success".format(name)}  # HTTPException 처리
 
 datasource = DatasourceDAO() # 인스턴스 생성
 
@@ -93,14 +111,15 @@ datasource = DatasourceDAO() # 인스턴스 생성
 class ListManager(Resource):
     # 마샬 리스트는 정의한 모델 객체를 목록으로 리턴해준다.
     # @datasource.marshal_list_with(datasource_model)
+    @api.expect(datasource_model)
     def get(self):
-        '''전체 datasource를 조회'''
-        return datasource.all_get()
+        '''datasource 전체조회'''
+        return datasource.get(None)
 
     @api.expect(datasource_model)
-    @api.marshal_with(datasource_model, code=201)
+    # @api.marshal_with(datasource_model, code=201)
     def post(self):
-        '''새로운 datasource를 생성'''
+        '''datasource 생성'''
         return datasource.create(api.payload), 201
 
 
@@ -109,18 +128,18 @@ class ListManager(Resource):
 @api.param('name', 'datasource name을 입력해주세요')
 class RUDManager(Resource):
     # @datasource.marshal_with(datasource_model)
+    @api.expect(datasource_model)
     def get(self, name):
-        '''해당 datasource를 조회'''
+        '''datasource를 조회'''
         return datasource.get(name)
 
     @api.response(204, 'datasource deleted')
     def delete(self, name):
-        '''해당 datasource를 삭제'''
-        datasource.delete(name)
-        return '', 204
+        '''datasource를 삭제'''
+        return datasource.delete(name)
 
     @api.expect(datasource_model)
-    @api.marshal_with(datasource_model)
+    # @api.marshal_with(datasource_model)
     def put(self, name):
-        '''해당 datasource를 수정'''
+        '''datasource를 수정'''
         return datasource.update(name, api.payload)

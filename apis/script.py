@@ -3,12 +3,11 @@ from flask_restplus import Namespace, Resource, fields, marshal, reqparse
 from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
 
-api = Namespace('script', description='파이썬 스크립트 관리')
+api = Namespace('script', description='스크립트 관리')
 
 # 모델정의
 
 Script_model = api.model('Script', {
-    'datasourceName' : fields.String(required=True),
     'packageName' : fields.String(required=True),
     'moduleName' : fields.String(required=True),
     'extension' : fields.String(required=True)
@@ -16,7 +15,7 @@ Script_model = api.model('Script', {
 
 class ScriptDAO(object):
     def __init__(self):
-        self.dir_path = './app/'
+        self.dir_path = './apps/'
         self.ALLOWED_EXTENSIONS = ['py']
 
     def response_form(self):
@@ -44,7 +43,14 @@ class ScriptDAO(object):
             for file in script:
                 extension = file.filename.split('.')[-1]
                 if extension in self.ALLOWED_EXTENSIONS:  # 확장자 검사
-                    file.save(package_path + '/' + secure_filename(file.filename)) # ./app/package/module.py
+                    file_name = secure_filename(file.filename)
+                    script_path = package_path + '/' + file_name
+                    if os.path.exists(script_path):  # 모듈 존재여부
+                        api.abort(404, "{} already exists".format(script_path))  # HTTPException 처리
+                    else:
+                        file.save(script_path)# ./app/package/module.py
+                        data = marshal({'packageName': packageName, 'moduleName': file_name, 'extension': extension}, Script_model)
+                        return data
                 else:
                     api.abort(404, "{} is an unusable extension.".format(extension))  # HTTPException 처리
         else:
@@ -89,7 +95,7 @@ class ListManager(Resource):
     @api.expect(Script_model)
     @api.marshal_with(Script_model, code=201)
     def post(self, packageName):
-        '''새로운 script 생성'''
+        '''script 생성'''
         return script.create(packageName), 201
 
 @api.route('/<string:packageName>/<string:moduleName>') # 네임스페이스 x.x.x.x/package/name 라우팅
@@ -99,12 +105,12 @@ class ListManager(Resource):
 class RUDManager(Resource):
     @api.response(204, 'package.module deleted')
     def delete(self, packageName, moduleName):
-        '''해당 script 삭제'''
+        '''script 삭제'''
         script.delete(packageName, moduleName)
         return '', 204
 
     # @api.expect(Script_model)
     # @api.marshal_with(Script_model) : 정의 된 API 모델 형식을 그대로 반환
     def put(self, packageName, moduleName):
-        '''해당 script 수정'''
+        '''script 수정'''
         return script.update(packageName, moduleName)
